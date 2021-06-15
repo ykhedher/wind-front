@@ -1,23 +1,40 @@
-import logo from './logo.svg';
+import React, { useState, useMemo } from "react";
 import './App.css';
+import Signin from './components/Signin'
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import { UserContext } from "./utils/UserContext";
+import Sidebar from "./components/Sidebar";
+import Profile from "./components/Profile";
+import Users from "./components/Users";
+import Projects from './components/Projects';
+import ProjectDetail from "./components/ProjectDetail";
+
 
 function App() {
+  const [user, setUser] = useState(null);
+
+  const value = useMemo(() => ({ user, setUser }), [user, setUser]);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+     <Router>
+        <Switch>
+          <UserContext.Provider value={value}>
+            <Route path={"/p/:username"} component={Profile} />
+            <Route exact path="/signin">
+              <Signin />
+            </Route>
+            <Route exact path="/users">
+              <Users />
+            </Route>
+            <Route exact path='/projects'>
+              <Projects/>
+            </Route>
+            <Route exact path="/projects/:id"> 
+            <ProjectDetail/>
+            </Route>
+          </UserContext.Provider>
+        </Switch>
+      </Router>
     </div>
   );
 }
