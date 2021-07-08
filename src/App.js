@@ -8,6 +8,7 @@ import Profile from "./components/Profile";
 import Users from "./components/Users";
 import Projects from './components/Projects';
 import ProjectDetail from "./components/ProjectDetail";
+import Dashboard from "./components/Dashboard";
 
 
 function App() {
@@ -31,6 +32,9 @@ function App() {
             </Route>
             <Route exact path="/projects/:id"> 
             <ProjectDetail/>
+            </Route>
+            <Route exact path='/dashboard'>
+              <Dashboard/>
             </Route>
           </UserContext.Provider>
         </Switch>

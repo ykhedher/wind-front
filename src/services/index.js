@@ -46,7 +46,7 @@ const addProject = data => {
       }
    }).then(res => res)
 }
-
+// get projects
 const getProjects = () => {
    return axios.get(`http://localhost:3030/projects/`, {
       headers: {
@@ -56,6 +56,7 @@ const getProjects = () => {
       .then(res => res)
 }
 
+//delete project by id
 const deleteProjectById = (id) => {
    return axios.delete(`http://localhost:3030/projects/${id}`, {
       headers: {
@@ -65,5 +66,110 @@ const deleteProjectById = (id) => {
       .then(res => res)
 }
 
+// get project by id
+const getProjectById = (id) => {
+   return axios.get(`http://localhost:3030/projects/${id}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
 
-export { getUsersList, deleteUserById, editUser, addUser, addProject, getProjects, deleteProjectById };
+// Remove user from project
+const removeUser = (data) => {
+   return axios.post(`http://localhost:3030/projects/editTeam`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+// Add member to project
+const addMember = (data) => {
+   return axios.post(`http://localhost:3030/projects/addTeam`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+// Create new task
+const addTask = (data) => {
+   return axios.post(`http://localhost:3030/tasks/`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+// get a task of project
+const getTasks = (projectId) => {
+   return axios.get(`http://localhost:3030/tasks/${projectId}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+// delete a task by id
+const deleteTask = id => {
+   return axios.delete(`http://localhost:3030/tasks/${id}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   }).then(res => res)
+}
+
+//get tasklog of a task
+const getTasklog = (taskId) => {
+   return axios.get(`http://localhost:3030/tasklog/${taskId}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+//view task information
+const getTask = (taskId) => {
+   return axios.get(`http://localhost:3030/tasks/getTask/${taskId}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+const updateTask = (data) => {
+   return axios.post(`http://localhost:3030/tasks/edit/`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+
+export {
+   getUsersList,
+   deleteUserById,
+   editUser,
+   addUser,
+   addProject,
+   getProjects,
+   deleteProjectById,
+   getProjectById,
+   removeUser,
+   addMember,
+   addTask,
+   getTasks,
+   deleteTask,
+   getTasklog,
+   getTask,
+   updateTask
+};

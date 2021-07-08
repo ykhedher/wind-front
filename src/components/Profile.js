@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react'
 import { UserContext } from '../utils/UserContext'
 import Sidebar from './Sidebar';
-import { Tabs, Form, Select, Input, Button, Upload } from 'antd';
+import { Tabs, Form, Select, Input, Button, Upload, Tag } from 'antd';
 import { UserOutlined, EditOutlined, UploadOutlined } from '@ant-design/icons';
 import { getUsersList, deleteUserById, editUser, addUser } from '../services/index';
 import styled from 'styled-components';
@@ -45,7 +45,7 @@ function Profile() {
    return (
       <div>
          <Sidebar />
-         <div style={{ 'margin-left': 260 }}>
+         <div style={{ 'marginLeft': 260 }}>
             <Tabs defaultActiveKey="1" onChange={callback}>
                <TabPane
                   tab="Profile"
@@ -53,23 +53,63 @@ function Profile() {
                   tab={
                      <span>
                         <UserOutlined />
-                           Profile
+                        Profile
                      </span>
                   }
                >
-               <h1>Profile Information</h1>
-                  <h2>First Name: {user.firstName}</h2><br/>
-                  <h2>Last Name: {user.lastName}</h2><br/>
-                  <h2>Username: {user.username}</h2><br/>
-                  <h2>Email: {user.email}</h2><br/>
-                  <h2>Role: {user.userType}</h2><br/>
+                  <h1>Profile Information</h1>
+                  <Form
+                     form={form}
+                     layout="vertical"
+                     name="form_in_modal"
+                     onFinish={onUserUpdate}
+                     initialValues={user}
+                     {...formItemLayout}
+                  >
+                     <Form.Item
+                        name="firstName"
+                        label="First Name"
+                     >
+                        <Input disabled />
+                     </Form.Item>
+                     <Form.Item
+                        name="lastName"
+                        label="Last Name"
+                     >
+                        <Input disabled />
+                     </Form.Item>
+                     <Form.Item
+                        name="email"
+                        label="E-mail"
+                     >
+                        <Input disabled />
+                     </Form.Item>
+
+                     <Form.Item
+                        name="username"
+                        label="username"                     >
+                        <Input disabled />
+                     </Form.Item>
+                     <Form.Item name="_id" noStyle>
+                        <Input type='hidden' />
+                     </Form.Item>
+                     <Form.Item name="userType" label="Role">
+                        <Input disabled />
+                     </Form.Item>
+                     <Form.Item name="isActive" label="Status">
+                        <Input disabled />
+                     </Form.Item>
+                     <Form.Item name="isVerified" label="Verified">
+                        <Input disabled />
+                     </Form.Item>
+                  </Form>
                </TabPane>
                <TabPane
                   tab="Edit Profile"
                   tab={
                      <span>
                         <EditOutlined />
-                           Edit Profile
+                        Edit Profile
                      </span>
                   }
                   key="2">
@@ -107,18 +147,17 @@ function Profile() {
                      <Form.Item
                         name="username"
                         label="username"
-                        tooltip="What do you want others to call you?"
                         rules={[{ required: true, message: 'Please input your username!', whitespace: false }]}
                      >
-                        <Input />
+                        <Input disabled />
                      </Form.Item>
                      <Form.Item
                         name="Password"
                         value=''
-                        label="password"
+                        label="Password"
                      >
 
-                        <Input />
+                        <Input.Password />
                      </Form.Item>
                      <Form.Item name="_id" noStyle>
                         <Input type='hidden' />
@@ -126,7 +165,7 @@ function Profile() {
                      <Form.Item>
                         <Button type="primary" htmlType="submit">
                            Edit Profile
-                  </Button>
+                        </Button>
                      </Form.Item>
                   </Form>
                </TabPane>

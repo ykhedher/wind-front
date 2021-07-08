@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
-import { Modal, Card, DatePicker, Col, Row, Button, Tag, Form, Input, Mentions, Tooltip, Switch, Avatar, Upload } from 'antd';
+import { Modal, Card, DatePicker, Col, Row, Button, Tag, Form, Input, Mentions, Tooltip, Switch, Avatar, Select } from 'antd';
 import { UserAddOutlined, UserOutlined, AntDesignOutlined } from '@ant-design/icons';
 import { addProject, deleteProjectById, getUsersList, getProjects } from '../services/index';
 import { openNotification } from '../services/notification'
@@ -9,6 +9,7 @@ import Sidebar from './Sidebar';
 import moment from 'moment';
 const { TextArea } = Input;
 const { Option, getMentions } = Mentions;
+
 
 //**************** Main ************************** */
 function Projects() {
@@ -26,7 +27,6 @@ function Projects() {
       getProjects()
          .then(items => {
             if (mounted) {
-               console.log(items['data'])
                setProjects(items['data'])
                // setIsLoading(false)
             }
@@ -55,19 +55,16 @@ function Projects() {
       values.users.shift();
       createProject(values)
    }
-   const onProjectUpdate = () => {
-
+   const onProjectUpdate = (values) => {
+      console.log(values)
    }
-   const handleOk = () => {
-      setIsModalVisible(false);
-      setVisible(false);
-   }
+   
    const showModal = () => {
       setIsModalVisible(true);
    }
    const onEdit = (project) => {
+      project.dateStart = moment(project.dateStart)
       setTemp(project)
-      console.log(project)
       setVisible(!visible);
    }
    const handleCancel = () => {
@@ -91,7 +88,6 @@ function Projects() {
          })
    }
 
-
    return (
       <>
          <Sidebar />
@@ -114,28 +110,12 @@ function Projects() {
                               backgroundColor: '#fde3cf',
                            }}
                         >
-                           <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
-                           <Avatar
-                              style={{
-                                 backgroundColor: '#f56a00',
-                              }}
-                           >
-                              K
-                           </Avatar>
-                           <Tooltip title="Ant User" placement="top">
-                              <Avatar
-                                 style={{
-                                    backgroundColor: '#87d068',
-                                 }}
-                                 icon={<UserOutlined />}
-                              />
-                           </Tooltip>
-                           <Avatar
-                              style={{
-                                 backgroundColor: '#1890ff',
-                              }}
-                              icon={<AntDesignOutlined />}
-                           />
+                           {project.users.map((user) => (
+                              <Tooltip title={user.firstName} placement="top">
+                                 <Avatar src={`http://localhost:3030/uploads/${user.image}`} alt={user.firstName}></Avatar>
+                              </Tooltip>
+                           )
+                           )}
                         </Avatar.Group>
                      </Card>
                   </Col>
@@ -145,12 +125,19 @@ function Projects() {
 
 
             {/* ************** Modal ******************* */}
-            <Modal title="Create new project" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+            <Modal title="Create new project" visible={isModalVisible} okText="Create Project" onOk={() => {
+               form
+                  .validateFields()
+                  .then((values) => onFinish(values))
+                  .catch((info) => {
+                     console.log('Validate Failed:', info);
+                  });
+            }}
+               onCancel={handleCancel}>
                <Form
                   {...formItemLayout}
                   form={form}
                   name="register"
-                  onFinish={onFinish}
                   scrollToFirstError
                >
                   <Form.Item
@@ -169,9 +156,13 @@ function Projects() {
                   <Form.Item
                      name="status"
                      label="Status"
-                     rules={[{ required: true, message: 'Please input your Project status!' }]}
+                     rules={[{ required: true, message: 'Please select a status!' }]}
                   >
-                     <Input />
+                     <Select placeholder="Select project status">
+                        <Option value="TO_DO">TO DO</Option>
+                        <Option value="PROGRESS">PROGRESS</Option>
+                        <Option value="DONE">DONE</Option>
+                     </Select>
                   </Form.Item>
                   <Form.Item
                      name="description"
@@ -186,6 +177,7 @@ function Projects() {
                      rules={[
                         {
                            required: true,
+                           message: 'Please select at least one collaborator'
                         },
                      ]}
                   >
@@ -195,22 +187,24 @@ function Projects() {
                         }
                      </Mentions>
                   </Form.Item>
-                  <Form.Item {...tailFormItemLayout}>
-                     <Button type="primary" htmlType="submit">
-                        Create Project
-                     </Button>
-                  </Form.Item>
                </Form>
             </Modal>
 
             {/* ************** Edit project ******************* */}
-            <Modal title="Edit project" visible={visible} onOk={handleOk} onCancel={handleCancel}>
+            <Modal title="Edit project" visible={visible} okText='Edit Project' onOk={() => {
+               form
+                  .validateFields()
+                  .then((values) => onProjectUpdate(values))
+                  .catch((info) => {
+                     console.log('Validate Failed:', info);
+                  });
+            }}
+               onCancel={handleCancel}>
                <Form
                   {...formItemLayout}
                   form={form}
                   name="editProject"
-                  onFinish={onProjectUpdate}
-                  // initialValues={temp}
+                  initialValues={temp}
                >
                   <Form.Item
                      name="name"
@@ -228,9 +222,13 @@ function Projects() {
                   <Form.Item
                      name="status"
                      label="Status"
-                     rules={[{ required: true, message: 'Please input your Project status!' }]}
+                     rules={[{ required: true, message: 'Please select a status!' }]}
                   >
-                     <Input />
+                     <Select placeholder="Select project status">
+                        <Option value="TO_DO">TO DO</Option>
+                        <Option value="PROGRESS">PROGRESS</Option>
+                        <Option value="DONE">DONE</Option>
+                     </Select>
                   </Form.Item>
                   <Form.Item
                      name="description"
@@ -238,12 +236,6 @@ function Projects() {
                      rules={[{ required: true, message: 'Please add project description' }]}
                   >
                      <TextArea />
-                  </Form.Item>
-                 
-                  <Form.Item {...tailFormItemLayout}>
-                     <Button type="primary" htmlType="submit">
-                        Edit project
-                     </Button>
                   </Form.Item>
                </Form>
             </Modal>

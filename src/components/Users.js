@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import { getUsersList, deleteUserById, editUser, addUser } from '../services/index';
 import { openNotification } from '../services/notification'
 import Sidebar from './Sidebar';
-import { tailFormItemLayout, formItemLayout} from '../utils/formStyles';
+import { tailFormItemLayout, formItemLayout } from '../utils/formStyles';
 
 
 const ListContainer = styled.div`
@@ -18,10 +18,8 @@ const ListContainer = styled.div`
    top: 50%;
 `
 function Users() {
-   const { user } = useContext(UserContext);
 
    const [users, setUsers] = useState([]);
-   const [switcher, setSwitcher] = useState(false)
    const [isModalVisible, setIsModalVisible] = useState(false);
    const [isLoading, setIsLoading] = useState(true);
    const [visible, setVisible] = useState(false);
@@ -89,12 +87,6 @@ function Users() {
    const showModal = () => {
       setIsModalVisible(true);
    };
-
-   const handleOk = () => {
-      setIsModalVisible(false);
-      setVisible(false)
-   };
-
    const handleCancel = () => {
       setIsModalVisible(false);
       setVisible(false)
@@ -112,6 +104,7 @@ function Users() {
          data.append(key, values[key]);
       }
       addNewUser(data, values);
+      setIsModalVisible(false);
    };
    const dummyRequest = ({ file, onSuccess }) => {
       setTimeout(() => {
@@ -191,17 +184,23 @@ function Users() {
          <Sidebar />
          <ListContainer>
             <Table dataSource={users} loading={isLoading} columns={columns} />
-            <Button onClick={showModal} type="primary" icon={<UserAddOutlined />} >Add new User</Button>
+            <Button onClick={showModal} type="primary" icon={<UserAddOutlined />} >Add New User</Button>
          </ListContainer>
 
 
          {/* ************** Modal ******************* */}
-         <Modal title="Add new user" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+         <Modal title="Add new user" visible={isModalVisible} okText='Add New User' onOk={() => {
+            form
+               .validateFields()
+               .then((values) => onFinish(values))
+               .catch((info) => {
+                  console.log('Validate Failed:', info);
+               });
+         }} onCancel={handleCancel}>
             <Form
                {...formItemLayout}
                form={form}
                name="register"
-               onFinish={onFinish}
                scrollToFirstError
             >
                <Form.Item
@@ -273,16 +272,11 @@ function Users() {
                   name="image"
                   label="User Image"
                   extra="user image"
+                  rules={[{ required: true, message: 'Please upload an image!' }]}
                >
                   <Upload name="image" listType="picture" maxCount={1} customRequest={dummyRequest} >
                      <Button icon={<UploadOutlined />}>Click to upload</Button>
                   </Upload>
-               </Form.Item>
-
-               <Form.Item {...tailFormItemLayout}>
-                  <Button type="primary" htmlType="submit">
-                     Add user
-        </Button>
                </Form.Item>
             </Form>
          </Modal>
@@ -291,17 +285,25 @@ function Users() {
          {/* ************************** User Modal  **********************************/}
          <Modal
             title="Edit user"
+            okText='Edit User'
             centered
-            onOk={handleOk} onCancel={handleCancel}
+            onCancel={handleCancel}
             visible={visible}
             width={700}
             bodyStyle={{ height: 600 }}
+            onOk={() => {
+               form
+                  .validateFields()
+                  .then((values) => onUserUpdate(values))
+                  .catch((info) => {
+                     console.log('Validate Failed:', info);
+                  });
+            }}
          >
             <Form
                form={form}
                layout="vertical"
                name="form_in_modal"
-               onFinish={onUserUpdate}
                initialValues={temp}
             >
                <Form.Item
@@ -358,11 +360,6 @@ function Users() {
                </Form.Item>
                <Form.Item name="_id" noStyle>
                   <Input type='hidden' />
-               </Form.Item>
-               <Form.Item {...tailFormItemLayout}>
-                  <Button type="primary" htmlType="submit">
-                     Edit User
-                  </Button>
                </Form.Item>
             </Form>
          </Modal>

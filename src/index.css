@@ -17,9 +17,31 @@ code {
   position: fixed;
   width: 250px !important;
 }
-.site-card-wrapper{
+.site-card-wrapper {
   overflow-x: hidden;
 }
-.selected{
+.selected {
   color: gold !important;
+}
+.teamTable {
+  max-width: 95%;
+  padding-left: 10px;
+  padding-top: 15px;
+  overflow-x: hidden;
+}
+.content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+.chart {
+  display: block !important; 
+  box-sizing: border-box;
+  height: 400px !important;
+  width: 400px !important;
+  top: -322px !important;
+  position: relative !important;
+  left: 270px!important;
 }
