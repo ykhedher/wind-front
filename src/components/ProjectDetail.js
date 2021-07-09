@@ -4,7 +4,7 @@ import moment from 'moment';
 import { openNotification } from '../services/notification';
 import { tailFormItemLayout, formItemLayout } from '../utils/formStyles';
 import { Table, Comment, Tooltip, DatePicker, Modal, Tabs, Tag, Space, Button, Form, Input, Select, Spin, Avatar, InputNumber, Mentions } from 'antd';
-import { getProjectById, removeUser, addMember, getUsersList, addTask, getTasks, deleteTask, getTasklog, getTask, updateTask } from '../services/index'
+import { getProjectById, removeUser, addMember, getUsersList, addTask, getTasks, deleteTask, getTasklog, getTask, updateTask, createSprint, getSprint } from '../services/index'
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -14,7 +14,12 @@ function ProjectDetail() {
    const [isLoading, setLoading] = useState(true);
    const [isModalVisible, setIsModalVisible] = useState(false);
    const [addMemberModal, setAddMemeberModal] = useState(false);
+   const [meetingModal, setMeetingModal] = useState(false);
    const [addTaskModal, setAddTaskModal] = useState(false);
+   const [taskLogModal, setTaskLogModal] = useState(false);
+   const [sprintModal, setSprintModal] = useState(false);
+   const [sprint, setSprint] = useState([]);
+   const [taskLog, setTasklog] = useState([])
    const [editTaskModal, setEditTaskModal] = useState(false);
    const [tempTask, setTempTask] = useState({});
    const [collabs, setCollabs] = useState([]);
@@ -33,7 +38,6 @@ function ProjectDetail() {
             if (mount) {
                setProject(items['data'][0]);
                setTeam(items['data'][0].users);
-               setLoading(false)
             }
          });
       getTasks(projectId)
@@ -49,6 +53,15 @@ function ProjectDetail() {
                setCollabs(items['data'])
             }
          })
+      getSprint(projectId)
+         .then(items => {
+            if (mount) {
+               setSprint(items['data'])
+               console.log(items['data'])
+            }
+            setLoading(false)
+         });
+
       return () => mount = false;
    }, [])
 
@@ -66,6 +79,8 @@ function ProjectDetail() {
       getTasklog(taskId)
          .then((res) => {
             console.log(res.data)
+            setTasklog(res.data[0].messages)
+            setTaskLogModal(true)
          })
          .catch(err => openNotification('error', err.response.data.message))
    }
@@ -158,9 +173,12 @@ function ProjectDetail() {
          title: 'Assigned to',
          dataIndex: 'affectedTo',
          key: 'affectedTo',
-         render: user => (<Tooltip title={user.firstName} placement="top">
-            <Avatar src={`http://localhost:3030/uploads/${user.image}`} />
-         </Tooltip>)
+         render: user => {
+            console.log('thsi is user', user)
+            return (<Tooltip title={user.firstName} placement="top">
+               <Avatar src={`http://localhost:3030/uploads/${user.image}`} />
+            </Tooltip>)
+         }
       },
       {
          title: 'Action',
@@ -272,6 +290,17 @@ function ProjectDetail() {
             console.log(err)
          })
    }
+   const onCreateSprint = (values) => {
+      values.dateStart = moment(values.dates[0]._d).format('YYYY-MM-DD');
+      values.dateEnd = moment(values.dates[1]._d).format('YYYY-MM-DD');
+      values.projectId = projectId;
+      createSprint(values).then((items) => {
+         openNotification('success', 'Sprint Created successfully');
+         setSprintModal(false);
+      }).catch((err) => {
+         openNotification('error', err);
+      })
+   }
 
    const showModal = () => {
       setAddTaskModal(true);
@@ -281,6 +310,9 @@ function ProjectDetail() {
       setAddMemeberModal(false);
       setAddTaskModal(false);
       setEditTaskModal(false);
+      setTaskLogModal(false);
+      setSprintModal(false);
+      setMeetingModal(false)
    };
 
    const onTaskUpdate = values => {
@@ -303,7 +335,7 @@ function ProjectDetail() {
    return (
       <>
          <Sidebar />
-         <Tabs defaultActiveKey="1" onChange={callback} style={{ 'marginLeft': 260 }}>
+         <Tabs defaultActiveKey="1" style={{ 'marginLeft': 260 }}>
             <TabPane tab='Project' key="1">
                <h1>Project Name: <strong>{project.name}</strong></h1>
                <h1>Project Description: <strong>{project.description}</strong></h1>
@@ -313,7 +345,7 @@ function ProjectDetail() {
                <h2>Backlog tasks</h2>
                <Table dataSource={tasks} scroll={{ x: '100% ' }} className='teamTable' columns={tasksColumn} />
                <Button type='primary' onClick={showModal}>Add New Task</Button>
-               <Button type='primary' style={{ marginLeft: 10, marginBottom: 30 }}>Create a Sprint</Button>
+               <Button type='primary' style={{ marginLeft: 10, marginBottom: 30 }} onClick={() => setSprintModal(true)}>Create a Sprint</Button>
             </TabPane>
             <TabPane tab="Team" key="3">
                <h2>Team in this project:</h2>
@@ -321,98 +353,35 @@ function ProjectDetail() {
                <Button type='primary' onClick={() => setAddMemeberModal(true)}>Add New Member</Button>
             </TabPane>
             <TabPane tab="Sprints" key="4">
-               Content of Tab Pane 4
+               {(isLoading) &&
+                  <><Sidebar /><div class="content"> <Spin size='large' /></div></>
+               }
+               {/* <Table dataSource={tasks} scroll={{ x: '100% ' }} className='teamTable' columns={tasksColumn} /> */}
             </TabPane>
             <TabPane tab="Current Sprint" key="5">
                <h1>Current Sprint</h1>
                <h3>Time Left: 20:00:59</h3>
-               {/* <Table dataSource={team} className='teamTable' columns={tasksColumn} /> */}
-            </TabPane>
+               {/* {(isLoading) &&
+                  <><Sidebar /><div class="content"> <Spin size='large' /></div></>
+               } */}
+               <Table dataSource={sprint[0].tasks} scroll={{ x: '100% ' }} className='teamTable' columns={tasksColumn} />            </TabPane>
             <TabPane tab="Meetings" key="6">
                <h2>Meetings</h2>
                <Table dataSource={team} className='teamTable' columns={Meetings} />
-               <Button type='primary'>Create Meeting</Button>
+               <Button type='primary' onClick={() => setMeetingModal(true)}>Create Meeting</Button>
             </TabPane>
          </Tabs>
          {/* ********************************** Modal ************************************ */}
          <Modal
-            title="Add new task"
-            okText='Add task'
-            visible={addTaskModal}
-            onOk={() => {
-               formTask
-                  .validateFields()
-                  .then((values) => onAddNewTask(values))
-                  .catch((info) => {
-                     console.log('Validate Failed:', info);
-                  });
-            }}
+            title="Task log"
+            okText='Close'
+            visible={taskLogModal}
             onCancel={handleCancel}>
-            <Form
-               {...formItemLayout}
-               form={formTask}
-               scrollToFirstError
-            >
-               <Form.Item
-                  name="name"
-                  label="Task title"
-                  rules={[{ required: true, message: 'Please input your the task title!' }]}
-               >
-                  <Input />
-               </Form.Item>
-               <Form.Item
-                  name="description"
-                  label="Description"
-                  rules={[{ required: true, message: 'Please add project description' }]}
-               >
-                  <TextArea />
-               </Form.Item>
-               <Form.Item
-                  name="status"
-                  label="Status"
-                  rules={[{ required: true, message: 'Please select a status!' }]}
-               >
-                  <Select placeholder="Select project status">
-                     <Option value="TO_DO">TO DO</Option>
-                     <Option value="PROGRESS">PROGRESS</Option>
-                     <Option value="DONE">DONE</Option>
-                  </Select>
-               </Form.Item>
-               <Form.Item
-                  name="priority"
-                  label="Priority"
-                  rules={[{ required: true, message: 'Please select task priority!' }]}
-               >
-                  <Select placeholder="Select project status">
-                     <Option value="LOW">LOW</Option>
-                     <Option value="MEDIUM">MEDIUM</Option>
-                     <Option value="HIGH">HIGH</Option>
-                  </Select>
-               </Form.Item>
-               <Form.Item
-                  label="Estimation"
-                  name="estimation"
-                  rules={[{ required: true, message: 'Please input your estimation!' }]}>
-                  <InputNumber />
-               </Form.Item>
-
-               <Form.Item
-                  name="affectedTo"
-                  label="Assign to"
-                  rules={[
-                     {
-                        required: true,
-                        message: 'Please select at least one collaborator'
-                     },
-                  ]}
-               >
-                  <Mentions rows={3} placeholder="You can use @ to select collaborators here">
-                     {
-                        team.map((user) => <Option value={user.username}><Avatar size={28} src={`http://localhost:3030/uploads/${user.image}`} style={{ marginRight: 9 }} />{user.username}</Option>)
-                     }
-                  </Mentions>
-               </Form.Item>
-            </Form>
+            <p>Task created at <b>July 8th 2021, 03:34</b> by <Avatar size={30} src='http://localhost:3030/uploads/1623416082378.jpg' /> <strong>@youssef</strong></p>
+            {/* {taskLog.map((item) => {
+               console.log(item.message)
+               return (<div dangerouslySetInnerHTML={{__html: item.message}}></div>)
+            })} */}
          </Modal>
 
          {/* ********************************** Modal ************************************ */}
@@ -502,11 +471,11 @@ function ProjectDetail() {
          <Modal
             title="Create a sprint"
             okText='Create Sprint'
-            visible={isModalVisible}
+            visible={sprintModal}
             onOk={() => {
                form
                   .validateFields()
-                  .then((values) => onAddMember(values))
+                  .then((values) => onCreateSprint(values))
                   .catch((info) => {
                      console.log('Validate Failed:', info);
                   });
@@ -519,21 +488,111 @@ function ProjectDetail() {
                name="register"
                scrollToFirstError
             >
-               <Form.Item name="range-time-picker" label="Start Date - End Date">
-                  <RangePicker showTime format="YYYY-MM-DD HH:mm:ss" />
+               <Form.Item
+                  name="dates"
+                  label="Duration"
+                  rules={[{ required: true, message: 'Please input sprint dates!' }]}
+               >
+                  <RangePicker showTime format="YYYY-MM-DD" />
                </Form.Item>
-               <Select mode="tags" style={{ width: '100%' }} placeholder="Tasks Mode" onChange={handleChange}>
-                  <Option key={1}>Fix the Navbar</Option>
-                  <Option key={2}>DB Design</Option>
-                  <Option key={3}>Front</Option>
-                  <Option key={4}>Integration</Option>
-               </Select>
+               <Form.Item
+                  name="tasks"
+                  label="Tasks"
+                  rules={[{ required: true, message: 'Please add at least one task!' }]}
+               >
+                  <Select mode="tags" style={{ width: '100%' }} placeholder="Tasks Mode">
+                     {
+                        tasks.map((task) => <Option value={task._id} key={task._id}>{task.name}</Option>)
+                     }
+                  </Select>
+               </Form.Item>
+
             </Form>
 
-         </Modal >
+         </Modal>
+         {/* ********************************** Modal ************************************ */}
+         <Modal
+            title="Add new task"
+            okText='Add task'
+            visible={addTaskModal}
+            onOk={() => {
+               formTask
+                  .validateFields()
+                  .then((values) => onAddNewTask(values))
+                  .catch((info) => {
+                     console.log('Validate Failed:', info);
+                  });
+            }}
+            onCancel={handleCancel}>
+            <Form
+               {...formItemLayout}
+               form={formTask}
+               scrollToFirstError
+            >
+               <Form.Item
+                  name="name"
+                  label="Task title"
+                  rules={[{ required: true, message: 'Please input your the task title!' }]}
+               >
+                  <Input />
+               </Form.Item>
+               <Form.Item
+                  name="description"
+                  label="Description"
+                  rules={[{ required: true, message: 'Please add project description' }]}
+               >
+                  <TextArea />
+               </Form.Item>
+               <Form.Item
+                  name="status"
+                  label="Status"
+                  rules={[{ required: true, message: 'Please select a status!' }]}
+               >
+                  <Select placeholder="Select project status">
+                     <Option value="TO_DO">TO DO</Option>
+                     <Option value="PROGRESS">PROGRESS</Option>
+                     <Option value="DONE">DONE</Option>
+                  </Select>
+               </Form.Item>
+               <Form.Item
+                  name="priority"
+                  label="Priority"
+                  rules={[{ required: true, message: 'Please select task priority!' }]}
+               >
+                  <Select placeholder="Select project status">
+                     <Option value="LOW">LOW</Option>
+                     <Option value="MEDIUM">MEDIUM</Option>
+                     <Option value="HIGH">HIGH</Option>
+                  </Select>
+               </Form.Item>
+               <Form.Item
+                  label="Estimation"
+                  name="estimation"
+                  rules={[{ required: true, message: 'Please input your estimation!' }]}>
+                  <InputNumber />
+               </Form.Item>
+
+               <Form.Item
+                  name="affectedTo"
+                  label="Assign to"
+                  rules={[
+                     {
+                        required: true,
+                        message: 'Please select at least one collaborator'
+                     },
+                  ]}
+               >
+                  <Mentions rows={3} placeholder="You can use @ to select collaborators here">
+                     {
+                        team.map((user) => <Option value={user.username}><Avatar size={28} src={`http://localhost:3030/uploads/${user.image}`} style={{ marginRight: 9 }} />{user.username}</Option>)
+                     }
+                  </Mentions>
+               </Form.Item>
+            </Form>
+         </Modal>
 
          {/* ********************************** Modal ************************************ */}
-         < Modal
+         <Modal
             title="Add member to project"
             okText='Add Member'
             visible={addMemberModal}
@@ -566,7 +625,65 @@ function ProjectDetail() {
                   </Mentions>
                </Form.Item>
             </Form>
-         </Modal >
+         </Modal>
+         {/* ********************************** Modal ************************************ */}
+         <Modal
+            title="Schedule a meeting"
+            okText='Schedule meeting'
+            visible={meetingModal}
+            onOk={() => {
+               form
+                  .validateFields()
+                  .then((values) => console.log(values))
+                  .catch((info) => {
+                     console.log('Validate Failed:', info);
+                  });
+            }}
+            onCancel={handleCancel} >
+            <Form
+               form={form}
+               {...formItemLayout}
+            >
+
+               <Form.Item
+                  name="title"
+                  label="Meeting Title"
+                  rules={[{ required: true, message: 'Please input your Meeting title!' }]}
+               >
+                  <Input />
+               </Form.Item>
+               <Form.Item name="dateStart" label="Start Date" rules={[{
+                  required: true,
+                  message: 'Please select date!',
+               }]}>
+                  <DatePicker format="YYYY-MM-DD" />
+               </Form.Item>
+               <Form.Item
+                  name="description"
+                  label="Description"
+                  rules={[{ required: true, message: 'Please add meeting description' }]}
+               >
+                  <TextArea />
+               </Form.Item>
+               <Form.Item
+                  name="users"
+                  label="Collaborators"
+                  rules={[
+                     {
+                        required: true,
+                        message: 'Please select at least one collaborator'
+                     },
+                  ]}
+               >
+                  <Mentions rows={3} placeholder="You can use @ to select collaborators here">
+                     {
+                        collabs.map((user) => <Option value={user.username} key={user._id}><Avatar size={28} src={`http://localhost:3030/uploads/${user.image}`} style={{ marginRight: 9 }} />{user.username}</Option>)
+                     }
+                  </Mentions>
+               </Form.Item>
+            </Form>
+         </Modal>
+
       </>
    )
 }
@@ -575,8 +692,3 @@ export default ProjectDetail;
 
 
 
-/* <p>Task created at <b>24/01/2021 10:20</b> By <strong><Avatar size={30} src={`http://localhost:3030/uploads/1623273887878.jpg`} />@youssef</strong></p>
-            <p>Task assigned to <Avatar size={30} src={`http://localhost:3030/uploads/1623373102333.jpg`} />@anas</p>
-            <p>Task status changed from <Tag color="green">TO DO</Tag>to <Tag color="blue">IN PROGRESS</Tag>By <Avatar size={30} src={`http://localhost:3030/uploads/1623373102333.jpg`} />@anas at <b>24/01/2021 16:50.</b></p>
-            <p>Task status changed from <Tag color="blue">IN PROGRESS</Tag>to <Tag color="green">DONE</Tag>By <Avatar size={30} src={`http://localhost:3030/uploads/1623373102333.jpg`} />@anas at <b>25/01/2021 11:04.</b></p>
-            <p>Task status changed from <Tag color="green">DONE</Tag>to <Tag color="blue">APPROVED</Tag>By <Avatar size={30} src={`http://localhost:3030/uploads/1623273887878.jpg`} />@youssef at <b>25/01/2021 14:31.</b></p */

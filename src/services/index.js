@@ -155,6 +155,24 @@ const updateTask = (data) => {
 }
 
 
+const createSprint = (data) => {
+   return axios.post(`http://localhost:3030/sprints/`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+//get current sprint
+const getSprint = (projectId) => {
+   return axios.get(`http://localhost:3030/sprints/${projectId}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   }).then(res => res)
+}
+
 export {
    getUsersList,
    deleteUserById,
@@ -171,5 +189,7 @@ export {
    deleteTask,
    getTasklog,
    getTask,
-   updateTask
+   updateTask,
+   createSprint,
+   getSprint
 };
