@@ -37,9 +37,7 @@ function Sidebar() {
 
    const logOut = () => {
       localStorage.removeItem('userToken');
-      history.push('/signin');
-
-
+      history.push('/');
    }
 
    return (
@@ -51,13 +49,13 @@ function Sidebar() {
                <div className="logo">
                   <Image src={logo} alt='wind logo' />
                </div>
-               {/* <Avatar shape="circle" size={128} src={`http://localhost:3030/uploads/${user.image}`} /> */}
-               {/* <Title level={2} style={{ color: "#fff" }}>Hi {user.firstName}</Title> */}
+               <Avatar shape="circle" size={128} src={`http://localhost:3030/uploads/${user.image}`} /> 
+               <Title level={2} style={{ color: "#fff" }}>Hi {user.firstName}</Title>
             </UserInfoContainer>
             <Divider />
             <Menu theme="dark" mode="inline">
                <Menu.Item key="1" icon={<UserOutlined />}>
-                  {/* <NavLink to={`/p/${user.username}`} activeClassName="selected">Profile</NavLink> */}
+                  <NavLink to={`/p/${user.username}`} activeClassName="selected">Profile</NavLink>
                </Menu.Item>
                <Menu.Item key="2" icon={<AppstoreOutlined />}>
                   <NavLink to='/projects' activeClassName="selected">Projects</NavLink>

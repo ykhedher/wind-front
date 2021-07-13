@@ -4,7 +4,7 @@ import moment from 'moment';
 import { openNotification } from '../services/notification';
 import { tailFormItemLayout, formItemLayout } from '../utils/formStyles';
 import { Table, Comment, Tooltip, DatePicker, Modal, Tabs, Tag, Space, Button, Form, Input, Select, Spin, Avatar, InputNumber, Mentions } from 'antd';
-import { getProjectById, removeUser, addMember, getUsersList, addTask, getTasks, deleteTask, getTasklog, getTask, updateTask, createSprint, getSprint } from '../services/index'
+import { getProjectById, removeUser, addMember, getUsersList, addTask, getTasks, deleteTask, getTasklog, getTask, updateTask, createSprint, getSprint, createMeeting, getMeetings, endSprint, getSprints } from '../services/index'
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -18,8 +18,11 @@ function ProjectDetail() {
    const [addTaskModal, setAddTaskModal] = useState(false);
    const [taskLogModal, setTaskLogModal] = useState(false);
    const [sprintModal, setSprintModal] = useState(false);
+   const [taskCommentModal, setTaskCommentModal] = useState(false);
    const [sprint, setSprint] = useState([]);
-   const [taskLog, setTasklog] = useState([])
+   const [allSprints, setAllSprints] = useState([]);
+   const [taskLog, setTasklog] = useState([]);
+   const [meeting, setMeetings] = useState([])
    const [editTaskModal, setEditTaskModal] = useState(false);
    const [tempTask, setTempTask] = useState({});
    const [collabs, setCollabs] = useState([]);
@@ -30,6 +33,11 @@ function ProjectDetail() {
    const [formTask] = Form.useForm();
    useEffect(() => { form.resetFields(); formTask.resetFields() }, [addTaskModal, addMemberModal, isModalVisible, editTaskModal]);
    const projectId = window.location.href.substr(31);
+   useEffect(() => {
+      setTimeout(() => {
+         setLoading(false)
+      }, 1000);
+   }, []);
 
    useEffect(() => {
       let mount = true
@@ -44,7 +52,6 @@ function ProjectDetail() {
          .then((items) => {
             if (mount) {
                setTasks(items['data']);
-               console.log(items['data'])
             }
          }).catch((err) => console.log(err))
       getUsersList()
@@ -59,11 +66,22 @@ function ProjectDetail() {
                setSprint(items['data'])
                console.log(items['data'])
             }
-            setLoading(false)
-         });
-
+         })
+      getSprints(projectId)
+         .then((items) => {
+            if (mount) {
+               setAllSprints(items['data'])
+            }
+         })
+      getMeetings(projectId)
+         .then((items) => {
+            if (mount) {
+               setMeetings(items['data']);
+            }
+         }).catch((err) => console.log(err))
       return () => mount = false;
    }, [])
+
 
    const deleteTaskById = (taskId) => {
       deleteTask(taskId)
@@ -78,7 +96,6 @@ function ProjectDetail() {
    const getTaskLog_ = (taskId) => {
       getTasklog(taskId)
          .then((res) => {
-            console.log(res.data)
             setTasklog(res.data[0].messages)
             setTaskLogModal(true)
          })
@@ -94,7 +111,6 @@ function ProjectDetail() {
             break;
          }
       }
-
       // })
       // .catch(err => openNotification('error', err.response.data.message))
    }
@@ -115,17 +131,46 @@ function ProjectDetail() {
          title: 'Date',
          dataIndex: 'date',
          key: 'date',
+         render: date => <p>{moment(date).format('MMMM Do YYYY, HH:mm')}</p>
       },
       {
-         title: 'Members',
-         dataIndex: 'imageA',
-         key: 'imageA',
-         render: image => (
-            <>
-               <Avatar src={`http://localhost:3030/uploads/${image}`} />
-               <Avatar src={`http://localhost:3030/uploads/${image}`} />
-               <Avatar src={`http://localhost:3030/uploads/${image}`} />
-            </>)
+         title: 'Collaborators',
+         dataIndex: 'collaborators',
+         key: 'collaborators',
+         render: collaborators => {
+            return (
+               <Avatar.Group
+                  maxCount={2}
+                  maxStyle={{
+                     color: '#f56a00',
+                     backgroundColor: '#fde3cf',
+                  }}
+               >
+                  {collaborators.map((item) => (
+                     <Tooltip title={item.username} placement="top">
+                        <Avatar src={`http://localhost:3030/uploads/${item.image}`} alt={item.username}></Avatar>
+                     </Tooltip>
+                  )
+                  )}
+               </Avatar.Group>
+            )
+         }
+      }
+   ];
+
+   const sprintsColumn = [
+
+      {
+         title: 'Date Start',
+         dataIndex: 'dateStart',
+         key: 'dateStart',
+         render: text => <p>{moment(text).format('MMMM Do YYYY, HH:mm')}</p>,
+      },
+      {
+         title: 'Date End',
+         dataIndex: 'dateEnd',
+         key: 'dateEnd',
+         render: text => <p>{moment(text).format('MMMM Do YYYY, HH:mm')}</p>,
       }
    ];
 
@@ -174,7 +219,6 @@ function ProjectDetail() {
          dataIndex: 'affectedTo',
          key: 'affectedTo',
          render: user => {
-            console.log('thsi is user', user)
             return (<Tooltip title={user.firstName} placement="top">
                <Avatar src={`http://localhost:3030/uploads/${user.image}`} />
             </Tooltip>)
@@ -278,7 +322,6 @@ function ProjectDetail() {
    const onAddNewTask = (values) => {
       values.affectedTo = values.affectedTo.substring(1).trim();
       values.projectId = projectId;
-      console.log(values);
       addTask(values).then(() => {
          getTasks(projectId).then((items) => {
             openNotification('success', 'Task added successfully');
@@ -297,6 +340,7 @@ function ProjectDetail() {
       createSprint(values).then((items) => {
          openNotification('success', 'Sprint Created successfully');
          setSprintModal(false);
+         getSprint(projectId).then((items) => setSprint(items['data']))
       }).catch((err) => {
          openNotification('error', err);
       })
@@ -312,7 +356,8 @@ function ProjectDetail() {
       setEditTaskModal(false);
       setTaskLogModal(false);
       setSprintModal(false);
-      setMeetingModal(false)
+      setMeetingModal(false);
+      setTaskCommentModal(false);
    };
 
    const onTaskUpdate = values => {
@@ -353,21 +398,33 @@ function ProjectDetail() {
                <Button type='primary' onClick={() => setAddMemeberModal(true)}>Add New Member</Button>
             </TabPane>
             <TabPane tab="Sprints" key="4">
-               {(isLoading) &&
-                  <><Sidebar /><div class="content"> <Spin size='large' /></div></>
-               }
-               {/* <Table dataSource={tasks} scroll={{ x: '100% ' }} className='teamTable' columns={tasksColumn} /> */}
+               <Table dataSource={allSprints} scroll={{ x: '100% ' }} className='teamTable' columns={sprintsColumn} />
             </TabPane>
             <TabPane tab="Current Sprint" key="5">
-               <h1>Current Sprint</h1>
-               <h3>Time Left: 20:00:59</h3>
-               {/* {(isLoading) &&
-                  <><Sidebar /><div class="content"> <Spin size='large' /></div></>
-               } */}
-               <Table dataSource={sprint[0].tasks} scroll={{ x: '100% ' }} className='teamTable' columns={tasksColumn} />            </TabPane>
+               {
+                  sprint.length == 0 &&
+                  <h2>
+                     No sprint is active
+                  </h2>
+               }
+               {
+                  sprint.length > 0 &&
+                  <>
+                     <h1>Current Sprint</h1>
+                     <h3>End Date: {moment(sprint[0].dateEnd).format('MMMM-DD-YYYY HH:mm')}</h3>
+                     <Table dataSource={sprint[0].tasks} scroll={{ x: '100% ' }} className='teamTable' columns={tasksColumn} />
+                     <Button type='primary'
+                        onClick={() => {
+                           endSprint({ id: sprint[0]._id })
+                           setAllSprints([...allSprints, sprint[0]]);
+                           setSprint([])
+                        }}>End Sprint</Button>
+                  </>
+               }
+            </TabPane>
             <TabPane tab="Meetings" key="6">
                <h2>Meetings</h2>
-               <Table dataSource={team} className='teamTable' columns={Meetings} />
+               <Table dataSource={meeting} className='teamTable' columns={Meetings} />
                <Button type='primary' onClick={() => setMeetingModal(true)}>Create Meeting</Button>
             </TabPane>
          </Tabs>
@@ -377,12 +434,22 @@ function ProjectDetail() {
             okText='Close'
             visible={taskLogModal}
             onCancel={handleCancel}>
-            <p>Task created at <b>July 8th 2021, 03:34</b> by <Avatar size={30} src='http://localhost:3030/uploads/1623416082378.jpg' /> <strong>@youssef</strong></p>
-            {/* {taskLog.map((item) => {
+            {taskLog.map((item) => {
                console.log(item.message)
-               return (<div dangerouslySetInnerHTML={{__html: item.message}}></div>)
-            })} */}
+               return (<div dangerouslySetInnerHTML={{ __html: item.message }}></div>)
+            })}
          </Modal>
+         {/* ********************************** Modal ************************************ */}
+         <Modal
+            title="Fix"
+            okText='Close'
+            visible={taskCommentModal}
+            onCancel={handleCancel}>
+            <h1>Hi</h1>
+         </Modal>
+
+
+
 
          {/* ********************************** Modal ************************************ */}
          <Modal
@@ -506,9 +573,7 @@ function ProjectDetail() {
                      }
                   </Select>
                </Form.Item>
-
             </Form>
-
          </Modal>
          {/* ********************************** Modal ************************************ */}
          <Modal
@@ -634,7 +699,22 @@ function ProjectDetail() {
             onOk={() => {
                form
                   .validateFields()
-                  .then((values) => console.log(values))
+                  .then((values) => {
+                     values.collaborators = values.collaborators.replace(/\s/g, "");
+                     values.collaborators = values.collaborators.split('@');
+                     values.collaborators = values.collaborators.filter((value, index, self) => { return self.indexOf(value) === index; });
+                     values.collaborators.shift();
+                     values.projectId = projectId;
+                     values.date = moment(values.dateStart).format('YYYY-MM-DD HH:mm');
+                     createMeeting(values).then(() => {
+                        openNotification('success', 'Meeting Scheduled');
+                        setMeetingModal(false);
+                        getMeetings(projectId)
+                           .then((items) => {
+                              setMeetings(items['data']);
+                           }).catch((err) => console.log(err))
+                     });
+                  })
                   .catch((info) => {
                      console.log('Validate Failed:', info);
                   });
@@ -656,7 +736,7 @@ function ProjectDetail() {
                   required: true,
                   message: 'Please select date!',
                }]}>
-                  <DatePicker format="YYYY-MM-DD" />
+                  <DatePicker showTime format="YYYY-MM-DD HH:mm" />
                </Form.Item>
                <Form.Item
                   name="description"
@@ -666,7 +746,7 @@ function ProjectDetail() {
                   <TextArea />
                </Form.Item>
                <Form.Item
-                  name="users"
+                  name="collaborators"
                   label="Collaborators"
                   rules={[
                      {

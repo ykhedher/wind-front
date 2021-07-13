@@ -173,6 +173,44 @@ const getSprint = (projectId) => {
    }).then(res => res)
 }
 
+const createMeeting = (data) => {
+   return axios.post(`http://localhost:3030/meeting/`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+
+//get current sprint
+const getMeetings = (projectId) => {
+   return axios.get(`http://localhost:3030/meeting/${projectId}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   }).then(res => res)
+}
+
+const endSprint = (data) => {
+   return axios.post(`http://localhost:3030/sprints/end`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+const getSprints = (projectId) => {
+   return axios.get(`http://localhost:3030/sprints/all/${projectId}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+
 export {
    getUsersList,
    deleteUserById,
@@ -191,5 +229,9 @@ export {
    getTask,
    updateTask,
    createSprint,
-   getSprint
+   getSprint,
+   createMeeting,
+   getMeetings,
+   endSprint,
+   getSprints
 };

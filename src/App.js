@@ -21,7 +21,7 @@ function App() {
         <Switch>
           <UserContext.Provider value={value}>
             <Route path={"/p/:username"} component={Profile} />
-            <Route exact path="/signin">
+            <Route exact path="/">
               <Signin />
             </Route>
             <Route exact path="/users">

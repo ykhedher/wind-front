@@ -1,12 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, Col, Row } from 'antd';
 import { Doughnut } from 'react-chartjs-2';
 import Sidebar from './Sidebar';
-import { Typography } from 'antd';
+import { Typography, Spin } from 'antd';
 import ReactWeather, { useOpenWeather } from 'react-open-weather';
 import moment from 'moment'
 const { Title, Text } = Typography;
 function Dashboard() {
+   const [loading, setLoading] = useState(true);
+
    const { data, isLoading, errorMessage } = useOpenWeather({
       key: 'af30419d1c51e6c69db2c2513406a74a',
       lat: '35.5024',
@@ -34,7 +36,9 @@ function Dashboard() {
       ],
    };
 
-
+   if (isLoading) {
+      return <><Sidebar /><div class="content"> <Spin size='large' /></div></>;
+   }
    return (
       <>
          <Sidebar />
@@ -74,7 +78,7 @@ function Dashboard() {
                </Col>
             </Row>
             <div style={{ width: 400, height: 400 }} className='chart'>
-            <Title level={3}>Tasks this week</Title>
+               <Title level={3}>Tasks this week</Title>
                <Doughnut
                   data={dataChart}
                   width='200px'
