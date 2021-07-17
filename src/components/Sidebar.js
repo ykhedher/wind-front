@@ -2,7 +2,7 @@ import React, { useContext } from 'react'
 import { UserContext } from '../utils/UserContext'
 import { NavLink, useHistory } from 'react-router-dom'
 import logo from '../assets/logo.png'
-import { Layout, Menu, Avatar, Typography, Divider} from 'antd';
+import { Layout, Menu, Avatar, Typography, Divider } from 'antd';
 import styled from 'styled-components'
 import {
    AppstoreOutlined,
@@ -42,14 +42,12 @@ function Sidebar() {
 
    return (
       <Layout>
-         <Sider
-            className='sider'
-         >
+         <Sider className='sider'>
             <UserInfoContainer>
                <div className="logo">
                   <Image src={logo} alt='wind logo' />
                </div>
-               <Avatar shape="circle" size={128} src={`http://localhost:3030/uploads/${user.image}`} /> 
+               <Avatar shape="circle" size={128} src={`http://localhost:3030/uploads/${user.image}`} />
                <Title level={2} style={{ color: "#fff" }}>Hi {user.firstName}</Title>
             </UserInfoContainer>
             <Divider />
@@ -60,12 +58,16 @@ function Sidebar() {
                <Menu.Item key="2" icon={<AppstoreOutlined />}>
                   <NavLink to='/projects' activeClassName="selected">Projects</NavLink>
                </Menu.Item>
-               <Menu.Item key="3" icon={<UsergroupAddOutlined />}>
-                  <NavLink to='/users' activeClassName="selected">Users</NavLink>
-               </Menu.Item>
-               <Menu.Item key="7" icon={<PieChartOutlined />}>
-                  <NavLink to='/dashboard' activeClassName="selected">Dashboard</NavLink>
-               </Menu.Item>
+               {user.userType === 'ADMIN' && (
+                  <>
+                     <Menu.Item key="3" icon={<UsergroupAddOutlined />}>
+                        <NavLink to='/users' activeClassName="selected">Users</NavLink>
+                     </Menu.Item>
+                     <Menu.Item key="7" icon={<PieChartOutlined />}>
+                        <NavLink to='/dashboard' activeClassName="selected">Dashboard</NavLink>
+                     </Menu.Item>
+                  </>
+               )}
                <Menu.Item key="8" onClick={logOut} icon={<LogoutOutlined />}>
                   Log out
                </Menu.Item>

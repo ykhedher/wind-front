@@ -55,6 +55,15 @@ const getProjects = () => {
    })
       .then(res => res)
 }
+// get done projects
+const getDoneProjects = () => {
+   return axios.get(`http://localhost:3030/projects/all`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
 
 //delete project by id
 const deleteProjectById = (id) => {
@@ -145,6 +154,17 @@ const getTask = (taskId) => {
       .then(res => res)
 }
 
+const editProject = (data) => {
+   return axios.post(`http://localhost:3030/projects/edit/`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+
+
 const updateTask = (data) => {
    return axios.post(`http://localhost:3030/tasks/edit/`, data, {
       headers: {
@@ -200,6 +220,15 @@ const endSprint = (data) => {
    })
       .then(res => res)
 }
+const createComment = (data) => {
+   return axios.post(`http://localhost:3030/comments/`, data, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
 
 const getSprints = (projectId) => {
    return axios.get(`http://localhost:3030/sprints/all/${projectId}`, {
@@ -210,6 +239,16 @@ const getSprints = (projectId) => {
       .then(res => res)
 }
 
+const getComments = (taskId) => {
+   return axios.get(`http://localhost:3030/comments/${taskId}`, {
+      headers: {
+         Authorization: 'Bearer ' + localStorage.getItem('userToken')
+      }
+   })
+      .then(res => res)
+}
+
+
 
 export {
    getUsersList,
@@ -218,8 +257,10 @@ export {
    addUser,
    addProject,
    getProjects,
+   getDoneProjects,
    deleteProjectById,
    getProjectById,
+   editProject,
    removeUser,
    addMember,
    addTask,
@@ -233,5 +274,7 @@ export {
    createMeeting,
    getMeetings,
    endSprint,
-   getSprints
+   getSprints,
+   getComments,
+   createComment
 };

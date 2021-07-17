@@ -1,13 +1,42 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, Col, Row } from 'antd';
 import { Doughnut } from 'react-chartjs-2';
 import Sidebar from './Sidebar';
 import { Typography, Spin } from 'antd';
 import ReactWeather, { useOpenWeather } from 'react-open-weather';
 import moment from 'moment'
+import { getProjects, getUsersList, getDoneProjects } from '../services';
 const { Title, Text } = Typography;
 function Dashboard() {
    const [loading, setLoading] = useState(true);
+   const [projectNumber, setProjectNumber] = useState(0);
+   const [doneProjects, setDoneProjects] = useState(0)
+   const [staff, setStaff] = useState(0)
+
+   useEffect(() => {
+      let mount = true
+      getProjects()
+         .then(items => {
+            if (mount) {
+               setProjectNumber(items['data'].length);
+            }
+         });
+      getDoneProjects()
+         .then(items => {
+            if (mount) {
+               setDoneProjects(items['data'].length);
+            }
+         });
+      getUsersList()
+         .then(items => {
+            if (mount) {
+               setStaff(items['data'].length);
+               setLoading(false)
+            }
+         })
+      return () => mount = false;
+   }, [])
+
 
    const { data, isLoading, errorMessage } = useOpenWeather({
       key: 'af30419d1c51e6c69db2c2513406a74a',
@@ -36,7 +65,7 @@ function Dashboard() {
       ],
    };
 
-   if (isLoading) {
+   if (loading) {
       return <><Sidebar /><div class="content"> <Spin size='large' /></div></>;
    }
    return (
@@ -48,19 +77,19 @@ function Dashboard() {
                <Col span={5}>
                   <Card bordered={true}>
                      <Title level={4}>Projects</Title>
-                     <Title type='success'>6</Title>
+                     <Title type='success'>{projectNumber}</Title>
                   </Card>
                </Col>
                <Col span={5}>
                   <Card bordered={true}>
                      <Title level={4}>Employees</Title>
-                     <Title type='success'>22</Title>
+                     <Title type='success'>{staff}</Title>
                   </Card>
                </Col>
                <Col span={5}>
                   <Card bordered={true}>
                      <Title level={4}>Finished Projects</Title>
-                     <Title type='success'>3</Title>
+                     <Title type='success'>{doneProjects}</Title>
                   </Card>
                </Col>
                <Col span={7} style={{ marginLeft: 100 }}>

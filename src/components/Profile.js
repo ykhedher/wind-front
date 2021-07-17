@@ -170,15 +170,7 @@ function Profile() {
                   </Form>
                </TabPane>
             </Tabs>
-
-
-
-            {/* <h1>This isss my profile {user.firstName}</h1>
-               <h2>hi</h2> */}
-
          </div>
-
-
       </div>
    )
 }

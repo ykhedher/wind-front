@@ -4,7 +4,7 @@ import moment from 'moment';
 import { openNotification } from '../services/notification';
 import { tailFormItemLayout, formItemLayout } from '../utils/formStyles';
 import { Table, Comment, Tooltip, DatePicker, Modal, Tabs, Tag, Space, Button, Form, Input, Select, Spin, Avatar, InputNumber, Mentions } from 'antd';
-import { getProjectById, removeUser, addMember, getUsersList, addTask, getTasks, deleteTask, getTasklog, getTask, updateTask, createSprint, getSprint, createMeeting, getMeetings, endSprint, getSprints } from '../services/index'
+import { getProjectById, removeUser, addMember, getUsersList, addTask, getTasks, deleteTask, getTasklog, getTask, updateTask, createSprint, getSprint, createMeeting, getMeetings, endSprint, getSprints, getComments, createComment } from '../services/index'
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -22,13 +22,15 @@ function ProjectDetail() {
    const [sprint, setSprint] = useState([]);
    const [allSprints, setAllSprints] = useState([]);
    const [taskLog, setTasklog] = useState([]);
-   const [meeting, setMeetings] = useState([])
+   const [meeting, setMeetings] = useState([]);
+   const [comments, setComments] = useState([])
    const [editTaskModal, setEditTaskModal] = useState(false);
    const [tempTask, setTempTask] = useState({});
    const [collabs, setCollabs] = useState([]);
    const [team, setTeam] = useState([]);
    const [tasks, setTasks] = useState([])
    const [project, setProject] = useState();
+   const [taskId, setTaskId] = useState();
    const [form] = Form.useForm();
    const [formTask] = Form.useForm();
    useEffect(() => { form.resetFields(); formTask.resetFields() }, [addTaskModal, addMemberModal, isModalVisible, editTaskModal]);
@@ -36,7 +38,7 @@ function ProjectDetail() {
    useEffect(() => {
       setTimeout(() => {
          setLoading(false)
-      }, 1000);
+      }, 2000);
    }, []);
 
    useEffect(() => {
@@ -64,7 +66,6 @@ function ProjectDetail() {
          .then(items => {
             if (mount) {
                setSprint(items['data'])
-               console.log(items['data'])
             }
          })
       getSprints(projectId)
@@ -82,7 +83,13 @@ function ProjectDetail() {
       return () => mount = false;
    }, [])
 
-
+   const getCommentsById = (taskId) => {
+      getComments(taskId).then(items => {
+         setComments(items['data'])
+         setTaskCommentModal(true);
+         setTaskId(taskId);
+      })
+   }
    const deleteTaskById = (taskId) => {
       deleteTask(taskId)
          .then((res) => {
@@ -185,7 +192,7 @@ function ProjectDetail() {
          title: 'Status',
          dataIndex: 'status',
          key: 'status',
-         render: text => <a>{text}</a>
+         render: (text, record) => <a>{text}</a>
       },
       {
          title: 'Priority',
@@ -232,6 +239,7 @@ function ProjectDetail() {
             <>
                <Button type='link' onClick={() => getTaskById(_id)}>View Task</Button>
                <Button type='link' onClick={() => getTaskLog_(_id)}>Task Log</Button>
+               <Button type='link' onClick={() => getCommentsById(_id)}>Comment</Button>
                <Button type="link" danger onClick={() => deleteTaskById(_id)}>Delete Task</Button>
             </>
          ),
@@ -441,16 +449,69 @@ function ProjectDetail() {
          </Modal>
          {/* ********************************** Modal ************************************ */}
          <Modal
-            title="Fix"
+            title='Task Comments'
             okText='Close'
+            onOk={() => { setTaskCommentModal(false) }}
             visible={taskCommentModal}
             onCancel={handleCancel}>
-            <h1>Hi</h1>
+
+            {comments.map((comment) => {
+               return (
+                  <>
+                     <Comment
+                        author={<a>{comment.username}</a>}
+                        avatar={
+                           <Avatar
+                              src={`http://localhost:3030/uploads/${comment.image}`}
+                              alt=""
+                           />
+                        }
+                        content={
+                           <p>
+                              {comment.text}
+                           </p>
+                        }
+                        datetime={
+                           <Tooltip title={moment(comment.createdAt).format('YYYY-MM-DD HH:mm:ss')}>
+                              <span>{moment(comment.createdAt).fromNow()}</span>
+                           </Tooltip>
+                        }
+                     />
+                  </>
+               )
+            })}
+            <Form
+               {...formItemLayout}
+               onFinish={() => {
+                  form
+                     .validateFields()
+                     .then((values) => {
+                        values.taskId = taskId;
+                        createComment(values).then(() => {
+                           openNotification('success', "Comment added Successfully")
+                           getComments(taskId).then((items) => setComments(items['data']))
+                           form.resetFields();
+                        })
+                     })
+                     .catch((info) => {
+                        console.log('Validate Failed:', info);
+                     });
+               }
+               }
+               form={form}>
+               <Form.Item
+                  name='text'
+                  rules={[{ required: true, message: 'Please input your the task title!' }]}
+               >
+                  <TextArea rows={4} />
+               </Form.Item>
+               <Form.Item>
+                  <Button htmlType="submit" type="primary">
+                     Add Comment
+                  </Button>
+               </Form.Item>
+            </Form>
          </Modal>
-
-
-
-
          {/* ********************************** Modal ************************************ */}
          <Modal
             title="Edit task"

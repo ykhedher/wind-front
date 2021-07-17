@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { Modal, Card, DatePicker, Col, Row, Button, Tag, Form, Input, Mentions, Tooltip, Switch, Avatar, Select } from 'antd';
-import { UserAddOutlined, UserOutlined, AntDesignOutlined } from '@ant-design/icons';
-import { addProject, deleteProjectById, getUsersList, getProjects } from '../services/index';
+import { AppstoreAddOutlined } from '@ant-design/icons';
+import { addProject, deleteProjectById, getUsersList, getProjects, editProject } from '../services/index';
 import { openNotification } from '../services/notification'
 import { tailFormItemLayout, formItemLayout } from '../utils/formStyles';
 import Sidebar from './Sidebar';
@@ -37,7 +37,8 @@ function Projects() {
    const createProject = data => {
       addProject(data)
          .then((res) => {
-            // setUsers([...users, values])
+            getProjects()
+               .then(items => setProjects(items['data']))
             setIsModalVisible(false)
             openNotification('success', res.data['message'])
 
@@ -56,9 +57,15 @@ function Projects() {
       createProject(values)
    }
    const onProjectUpdate = (values) => {
-      console.log(values)
+      editProject(values).then(() => {
+         getProjects()
+            .then(items => setProjects(items['data']))
+         setVisible(false)
+         openNotification('success', 'Project Updated Successfully')
+
+      })
    }
-   
+
    const showModal = () => {
       setIsModalVisible(true);
    }
@@ -97,7 +104,7 @@ function Projects() {
                   <Col span={5} style={{ paddingTop: 10 }} >
                      <Card title={project.name} bordered={true}>
                         <h4>Status: <Tag color='green'>{project.status}</Tag></h4>
-                        <h4>Date Start: <Tag color='geekblue'>{moment(project.dateStart).format("MM-DD-YYYY")}</Tag></h4>
+                        <h4>Date Start: <Tag color='geekblue'>{moment(project.dateStart).format("MMMM-DD-YYYY")}</Tag></h4>
                         <div>
                            <Link to={`projects/${project._id}`}>View Project</Link>
                            <Button type='link' onClick={() => { onEdit(project) }} >Edit</Button>
@@ -121,7 +128,7 @@ function Projects() {
                   </Col>
                ))}
             </Row>
-            <Button onClick={showModal} type="primary" icon={<UserAddOutlined />} style={{ marginTop: 30 }}>Add new Project</Button>
+            <Button onClick={showModal} type="primary" icon={<AppstoreAddOutlined />} style={{ marginTop: 30 }}>Add new Project</Button>
 
 
             {/* ************** Modal ******************* */}
@@ -236,6 +243,9 @@ function Projects() {
                      rules={[{ required: true, message: 'Please add project description' }]}
                   >
                      <TextArea />
+                  </Form.Item>
+                  <Form.Item name="_id" noStyle>
+                     <Input type='hidden' />
                   </Form.Item>
                </Form>
             </Modal>
